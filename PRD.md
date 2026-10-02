@@ -26,73 +26,167 @@
 
 ## 3. Features & Functional Requirements
 
-### 3.1 AI Agent ("The Digital Broker")
+### 3.1 AI Agent ("The Digital Broker") ✅ IMPLEMENTED
 *   **Natural Language Search:** Users can type "3-bedroom in Ikeja GRA under 5m" and get results.
 *   **Conversational Filtering:** The AI asks follow-up questions (e.g., "Do you need a BQ?", "Is 24/7 power mandatory?").
-*   **Scheduling:** AI interfaces with the agent's calendar to book inspections.
-*   **Negotiation Assistant:** AI provides price history for the area to help users make fair offers.
+*   **Nigerian Context:** AI understands local areas, prices in Naira, and Nigerian real estate terminology.
+*   **Streaming Responses:** Real-time text streaming powered by Google Gemini.
+*   ~~Scheduling:~~ AI interfaces with the agent's calendar to book inspections. *(Future phase)*
+*   ~~Negotiation Assistant:~~ AI provides price history for the area. *(Future phase)*
 
-### 3.2 "TrueVerify" Trust System
-*   **Video Walkthroughs:** Mandatory timestamped videos for "Verified" badge.
-*   **Agent KYC:** Integration with NIN/BVN verification (future phase).
-*   **Report & Ban:** Users can report "ghost listings"; 3 strikes = agent ban.
+### 3.2 "TrueVerify" Trust System ✅ PARTIALLY IMPLEMENTED
+*   **Video Walkthroughs:** UI for mandatory timestamped videos for "Verified" badge.
+*   ~~Agent KYC:~~ Integration with NIN/BVN verification. *(Future phase)*
+*   ~~Report & Ban:~~ Users can report "ghost listings"; 3 strikes = agent ban. *(Future phase)*
 
-### 3.3 Listings Management
-*   **Categories:** Residential (Rent/Sale), Commercial, Short-let.
+### 3.3 Listings Management ✅ IMPLEMENTED
+*   **Categories:** Residential (Rent/Sale), Short-let.
 *   **Attributes:**
-    *   Location (State, LGA, Area, Street).
-    *   Price (Annual Rent, Service Charge, Caution Fee, Agency Fee, Legal Fee).
-    *   Amenities (Generator, Inverter, Water Treatment, Security).
-*   **WhatsApp Integration:** Auto-sync listings from WhatsApp Business API (future phase).
+    *   Location (State, City, Area, Address).
+    *   Price with Nigerian-specific periods (per annum, per month, per night).
+    *   Specs (Bedrooms, Bathrooms, Toilets, Parking).
+*   **Form Validation:** Zod schemas with react-hook-form integration.
+*   **Database Integration:** Properties stored in Supabase with RLS policies.
+*   ~~WhatsApp Integration:~~ Auto-sync listings from WhatsApp Business API. *(Future phase)*
 
-### 3.4 User Dashboard
-*   **Favorites:** Saved properties.
-*   **Search History:** Recent AI chats.
-*   **Alerts:** Notifications for new matches.
+### 3.4 User Dashboard ✅ IMPLEMENTED
+*   **Overview Stats:** Listing count, views, leads (placeholders ready for data).
+*   **My Listings:** View, edit, delete user's properties.
+*   **Quick Actions:** Post new listing, boost listings, verify video, edit profile.
+*   ~~Favorites:~~ Saved properties. *(Future phase)*
+*   ~~Search History:~~ Recent AI chats. *(Future phase)*
+*   ~~Alerts:~~ Notifications for new matches. *(Future phase)*
+
+### 3.5 Authentication System ✅ IMPLEMENTED
+*   **Email/Password Auth:** Secure authentication via Supabase Auth.
+*   **Role Selection:** Users choose between "Property Seeker" and "Property Agent" on signup.
+*   **Protected Routes:** Middleware protects dashboard routes.
+*   **Session Management:** SSR-compatible auth with automatic token refresh.
+
+### 3.6 Mobile Navigation ✅ IMPLEMENTED
+*   **Landing Page:** Hamburger menu with slide-in drawer for mobile.
+*   **Dashboard:** Mobile sidebar with touch-friendly navigation.
+*   **Responsive Design:** All pages optimized for mobile-first experience.
 
 ---
 
 ## 4. Technical Architecture
 
-### 4.1 Tech Stack
-*   **Framework:** Next.js 14+ (App Router).
+### 4.1 Tech Stack (Current Implementation)
+*   **Framework:** Next.js 16 (App Router).
 *   **Language:** TypeScript.
-*   **Styling:** Tailwind CSS + Shadcn UI.
+*   **Styling:** Tailwind CSS 4.
 *   **Database:** Supabase (PostgreSQL).
-*   **Auth:** Clerk or Supabase Auth.
-*   **AI:** OpenAI API (GPT-4o) via Vercel AI SDK.
-*   **Map:** Google Maps Platform / Mapbox.
+*   **Auth:** Supabase Auth with SSR (`@supabase/ssr`).
+*   **AI:** Vercel AI SDK + Google Gemini (`ai`, `@ai-sdk/google`).
+*   **Form Validation:** Zod 4 + React Hook Form.
+*   **Icons:** Lucide React.
 
-### 4.2 Data Model (Simplified)
-*   `users`: id, name, email, role (seeker/agent).
-*   `properties`: id, agent_id, title, description, price, location, images[], video_url, is_verified.
-*   `chats`: id, user_id, messages[].
-*   `bookings`: id, property_id, user_id, date, status.
+### 4.2 Data Model (Implemented)
+
+```sql
+-- Users
+profiles: id, email, full_name, avatar_url, role (seeker/agent/admin), is_verified, created_at
+
+-- Properties
+properties: id, owner_id, title, description, price, currency, period, type (rent/sale/short_let),
+            status (draft/pending/active/sold/leased), address, area, city, state,
+            bedrooms, bathrooms, toilets, parking, images[] (currently external URLs or placeholder/empty values from seed data; no upload flow yet),
+            video_url, is_verified_listing, created_at, updated_at
+
+-- Features (Many-to-Many)
+features: id, name
+property_features: property_id, feature_id
+```
+
+### 4.3 Key Files
+
+| File | Purpose |
+|------|---------|
+| `middleware.ts` | Route protection, session refresh |
+| `lib/supabase/server.ts` | Server-side Supabase client |
+| `lib/supabase/client.ts` | Browser-side Supabase client |
+| `lib/supabase/middleware.ts` | Middleware Supabase client |
+| `lib/prompts/real-estate.ts` | AI system prompt for Nigerian context |
+| `lib/validations/listing.ts` | Zod schemas for form validation |
+| `components/AIChat.tsx` | Floating chat widget with streaming |
+| `components/DashboardSidebar.tsx` | Dashboard navigation with mobile drawer |
 
 ---
 
 ## 5. Design Guidelines (Nigeria Context)
-*   **Mobile First:** 90% of Nigerian traffic is mobile.
-*   **Data Saver:** Optimized images for slower networks.
-*   **Trust Signals:** Prominent use of "Verified" badges and green colors (safety).
-*   **Local Terminology:** Use terms like "Self-con", "Duplex", "Tenement Rate".
+*   **Mobile First:** 90% of Nigerian traffic is mobile. ✅
+*   **Data Saver:** Optimized images for slower networks. *(Partial)*
+*   **Trust Signals:** Prominent use of "Verified" badges and green colors (safety). ✅
+*   **Local Terminology:** Use terms like "Self-con", "Duplex", "Tenement Rate". *(Future enhancement)*
 
 ---
 
-## 6. Roadmap
+## 6. Implementation Status
 
-### Phase 1: MVP (Weeks 1-3)
-*   Project Setup & CI/CD.
-*   Database Schema & Auth.
-*   Basic Property CRUD (Create, Read, Update, Delete).
-*   Public Listing Page.
+### Phase 1: Foundation ✅ COMPLETE
+- [x] Project Setup with Next.js 16
+- [x] Supabase SSR Authentication
+- [x] Database Schema with RLS
+- [x] Protected Dashboard Routes
+- [x] User Registration with Role Selection
+- [x] Login/Logout Flow
 
-### Phase 2: The Agent (Weeks 4-6)
-*   Integrate Vercel AI SDK.
-*   Build Chat Interface.
-*   Implement RAG (Retrieval-Augmented Generation) for property search.
+### Phase 2: AI Integration ✅ COMPLETE
+- [x] Vercel AI SDK Integration
+- [x] Google Gemini Model Configuration
+- [x] Nigerian Real Estate System Prompt
+- [x] Streaming Chat Interface
+- [x] Floating Chat Widget
 
-### Phase 3: Trust & Polish (Weeks 7-8)
-*   Video upload support.
-*   "Verified" badge logic.
-*   UI Polish & Animations.
+### Phase 3: Listings ✅ COMPLETE
+- [x] Form Validation with Zod
+- [x] Multi-step Listing Form
+- [x] Database Insert for Properties
+- [x] Listings Table with Real Data
+- [x] Dashboard Stats Integration
+
+### Phase 4: Mobile & Polish ✅ COMPLETE
+- [x] Mobile Navigation (Landing Page)
+- [x] Mobile Sidebar (Dashboard)
+- [x] Responsive Form Layouts
+- [x] Loading States & Error Handling
+
+### Phase 5: Future Enhancements
+- [ ] Image Upload to Supabase Storage (not implemented; images[] currently populated with external URLs or placeholder/empty values from seed data)
+- [ ] Video Upload for TrueVerify
+- [ ] Agent KYC Verification
+- [ ] Property Search with Filters
+- [ ] Favorites/Saved Properties
+- [ ] Notification System
+- [ ] WhatsApp Integration
+- [ ] Calendar Booking System
+
+---
+
+## 7. Environment Variables
+
+```env
+# Required
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxx...
+GOOGLE_GENERATIVE_AI_API_KEY=your-gemini-api-key
+```
+
+---
+
+## 8. API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/chat` | POST | AI chat with streaming response |
+
+---
+
+## 9. Security Considerations
+
+*   **Row Level Security:** All database tables have RLS policies.
+*   **Server-side Auth:** User sessions validated on the server.
+*   **Protected Routes:** Middleware enforces authentication.
+*   **Input Validation:** Zod schemas validate all form inputs.
+*   **CSRF Protection:** Built into Supabase Auth.
